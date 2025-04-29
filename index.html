@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Enviar e Ler Dados da Planilha</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    input, button {
+      margin: 5px 0;
+      padding: 10px;
+      width: 300px;
+      border: none;
+      border-radius: 5px;
+    }
+    input {
+      background-color: #1e1e1e;
+      color: white;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+    #lista {
+      list-style-type: none;
+      padding: 0;
+      margin-top: 20px;
+    }
+    li {
+      margin: 10px 0;
+      background: #1f1f1f;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #mensagem {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Planilha Pública - Enviar e Ler Dados</h1>
+
+  <form id="meuFormulario">
+    <input type="text" name="nome" placeholder="Seu nome" required><br>
+    <button type="submit">Enviar</button>
+  </form>
+  <p id="mensagem"></p>
+
+  <h2>Lista de Itens da Planilha</h2>
+  <ul id="lista"></ul>
+
+  <script>
+    const formulario = document.getElementById("meuFormulario");
+    const mensagem = document.getElementById("mensagem");
+    const lista = document.getElementById("lista");
+
+    // URL do Apps Script (substitua pelo SEU LINK de Web App)
+    const postURL = "https://script.google.com/macros/s/AKfycbzxEAwQSozBqG0vF-YV3GE0b3qtxswABhyjwu54H2k-QGR02w7uY3Rq-Lg7Ckk5wp0IVg/exec";
+
+    // URL pública da planilha (substitua pelo SEU ID de planilha)
+    const getURL = "https://docs.google.com/spreadsheets/d/1_e6t_XPSF6fDXHewhpEpI06lIS0YyazA49miMu4cL9U/gviz/tq?tqx=out:json";
+
+    formulario.addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const dados = new FormData(formulario);
+
+      fetch(postURL, {
+        method: "POST",
+        body: dados
+      })
+      .then(response => response.text())
+      .then(txt => {
+        mensagem.textContent = "Dados enviados com sucesso!";
+        formulario.reset();
+        fetchData(); // Atualiza lista após envio
+      })
+      .catch(err => {
+        mensagem.textContent = "Erro ao enviar: " + err;
+      });
+    });
+
+    function fetchData() {
+      fetch(getURL)
+        .then(res => res.text())
+        .then(text => {
+          const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\((.*)\)/)[1]);
+          const rows = json.table.rows;
+          lista.innerHTML = '';
+          rows.forEach(row => {
+            if (row.c[0]) {
+              const li = document.createElement('li');
+              li.textContent = row.c[0].v;  // coluna A
+              lista.appendChild(li);
+            }
+          });
+        })
+        .catch(error => {
+          console.error('Erro ao acessar os dados da planilha:', error);
+        });
+    }
+
+    function startAutoUpdate() {
+      setInterval(fetchData, 100); // Atualiza a cada 10 segundos
+    }
+
+    window.onload = function() {
+      fetchData();
+      startAutoUpdate();
+    }
+  </script>
+
+</body>
+</html>
