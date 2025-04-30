@@ -70,16 +70,35 @@
   
     // Submissão do formulário adiciona ao buffer (não envia ainda)
     formulario.addEventListener("submit", function(e) {
-      e.preventDefault();
-      const nome = formulario.elements["nome"].value.trim();
-      if (nome !== "") {
+  e.preventDefault();
+  const inputValor = formulario.elements["nome"].value.trim();
+
+  if (inputValor !== "") {
+    const nomes = inputValor
+      .split(",")
+      .map(nome => nome.trim())
+      .filter(nome => nome !== "");
+
+    let adicionou = false;
+    nomes.forEach(nome => {
+      if (!dadosPlanilha.includes(nome) && !dadosPendentes.includes(nome)) {
         dadosPendentes.push(nome);
-        mensagem.textContent = "Adicionado ao buffer. Será enviado em breve.";
-        console.log("Buffer atual:", dadosPendentes);
-        enviarDadosPendentes();
-        formulario.reset();
+        adicionou = true;
+      } else {
+        console.log(`"${nome}" já está na planilha ou no buffer.`);
       }
     });
+
+    if (adicionou) {
+      mensagem.textContent = "Valor(es) adicionado(s) ao buffer. Será(ão) enviado(s) em breve.";
+      enviarDadosPendentes();
+    } else {
+      mensagem.textContent = "Todos os valores já estavam na planilha ou no buffer.";
+    }
+
+    formulario.reset();
+  }
+});
   
     // Envia todos os dados do buffer de envio
     function enviarDadosPendentes() {
